@@ -1,23 +1,36 @@
 package com.playtomic.tests.wallet.infrastructure.http;
 
+import com.playtomic.tests.wallet.application.TopUpReader;
+import com.playtomic.tests.wallet.application.TopUpView;
+import com.playtomic.tests.wallet.application.TopUpWallet;
 import com.playtomic.tests.wallet.application.WalletReader;
 import com.playtomic.tests.wallet.application.WalletView;
+import com.playtomic.tests.wallet.domain.CardNumber;
 import com.playtomic.tests.wallet.domain.Money;
+import com.playtomic.tests.wallet.domain.TopUpId;
+import com.playtomic.tests.wallet.domain.TopUpStatus;
 import com.playtomic.tests.wallet.domain.WalletId;
 import com.playtomic.tests.wallet.domain.exceptions.WalletNotFoundException;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
-
 import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 import static com.playtomic.tests.wallet.JsonText.compact;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +44,12 @@ class WalletControllerTest {
 
     @MockBean
     private WalletReader walletReader;
+
+    @MockBean
+    private TopUpWallet topUpWallet;
+
+    @MockBean
+    private TopUpReader topUpReader;
 
     @Test
     void returns_the_wallet_with_its_balance_in_the_currency_decimals() throws Exception {
@@ -64,5 +83,28 @@ class WalletControllerTest {
                           "detail": "Wallet 00000000-0000-7000-8000-000000000001 does not exist"
                         }
                         """));
+    }
+
+    @Test
+    void a_top_up_is_created_and_answered_with_its_recorded_state() throws Exception {
+        Money amount = new Money(new BigDecimal("15.00"), Currency.getInstance("EUR"));
+        when(topUpReader.findOrFail(any())).thenAnswer(invocation ->
+                new TopUpView(invocation.getArgument(0), TopUpStatus.COMPLETED, amount));
+
+        String body = mvc.perform(post("/wallets/{id}/top-ups", ID).contentType(MediaType.APPLICATION_JSON).content("""
+                        { "amount": { "amount": 15.00, "currency": "EUR" }, "cardNumber": "4242 4242 4242 4242" }
+                        """))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        ArgumentCaptor<TopUpId> topUpId = ArgumentCaptor.forClass(TopUpId.class);
+        verify(topUpWallet).topUp(topUpId.capture(), eq(new WalletId(ID)), eq(amount), eq(new CardNumber("4242 4242 4242 4242")));
+        assertThat(body).isEqualTo(compact("""
+                {
+                  "id": "%s",
+                  "status": "COMPLETED",
+                  "amount": { "amount": 15.00, "currency": "EUR" }
+                }
+                """.formatted(topUpId.getValue().value())));
     }
 }

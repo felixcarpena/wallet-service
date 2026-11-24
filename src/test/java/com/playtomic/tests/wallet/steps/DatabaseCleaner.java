@@ -1,21 +1,19 @@
 package com.playtomic.tests.wallet.steps;
 
 import io.cucumber.java.Before;
-import jakarta.persistence.EntityManager;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.jdbc.JdbcTestUtils;
 
 public class DatabaseCleaner {
 
-    private final EntityManager entityManager;
-    private final TransactionTemplate transaction;
+    private final JdbcTemplate jdbc;
 
-    public DatabaseCleaner(EntityManager entityManager, TransactionTemplate transaction) {
-        this.entityManager = entityManager;
-        this.transaction = transaction;
+    public DatabaseCleaner(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
     @Before
     public void emptyTables() {
-        transaction.executeWithoutResult(status -> entityManager.createQuery("delete from Wallet").executeUpdate());
+        JdbcTestUtils.deleteFromTables(jdbc, "wallet_movement", "top_up", "wallet");
     }
 }

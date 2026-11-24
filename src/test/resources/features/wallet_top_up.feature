@@ -3,7 +3,6 @@ Feature: Wallet top-up
 
   Rule: A top-up is credited only after the payment provider accepts the charge
 
-    @pending
     Scenario Outline: A successful charge adds the amount to the balance
       Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of <balance>
       And the payment provider accepts the charge

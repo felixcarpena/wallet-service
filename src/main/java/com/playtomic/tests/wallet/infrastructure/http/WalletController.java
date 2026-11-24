@@ -1,9 +1,17 @@
 package com.playtomic.tests.wallet.infrastructure.http;
 
+import com.playtomic.tests.wallet.application.TopUpReader;
+import com.playtomic.tests.wallet.application.TopUpWallet;
 import com.playtomic.tests.wallet.application.WalletReader;
+import com.playtomic.tests.wallet.domain.CardNumber;
+import com.playtomic.tests.wallet.domain.TopUpId;
 import com.playtomic.tests.wallet.domain.WalletId;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -12,13 +20,25 @@ import java.util.UUID;
 public class WalletController {
 
     private final WalletReader walletReader;
+    private final TopUpWallet topUpWallet;
+    private final TopUpReader topUpReader;
 
-    public WalletController(WalletReader walletReader) {
+    public WalletController(WalletReader walletReader, TopUpWallet topUpWallet, TopUpReader topUpReader) {
         this.walletReader = walletReader;
+        this.topUpWallet = topUpWallet;
+        this.topUpReader = topUpReader;
     }
 
     @GetMapping("/wallets/{id}")
     public WalletResponse findWallet(@PathVariable UUID id) {
         return WalletResponse.from(walletReader.findOrFail(new WalletId(id)));
+    }
+
+    @PostMapping("/wallets/{id}/top-ups")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TopUpResponse topUp(@PathVariable UUID id, @RequestBody TopUpRequest request) {
+        TopUpId topUpId = TopUpId.generate();
+        topUpWallet.topUp(topUpId, new WalletId(id), request.amount().toMoney(), new CardNumber(request.cardNumber()));
+        return TopUpResponse.from(topUpReader.findOrFail(topUpId));
     }
 }
