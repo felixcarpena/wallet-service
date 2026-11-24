@@ -1,5 +1,6 @@
 spring.profiles.active: develop
 spring.jpa.open-in-view: false
+spring.mvc.problemdetails.enabled: true
 server:
   port: 8090
 ---

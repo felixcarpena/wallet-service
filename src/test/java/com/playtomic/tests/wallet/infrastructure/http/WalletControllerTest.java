@@ -141,4 +141,18 @@ class WalletControllerTest {
                         { "status": "%s" }
                         """.formatted(outcome)));
     }
+
+    @Test
+    void a_malformed_wallet_id_is_reported_as_a_bad_request() throws Exception {
+        mvc.perform(get("/wallets/{id}", "not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType("application/problem+json"));
+    }
+
+    @Test
+    void a_top_up_without_a_body_is_reported_as_a_bad_request() throws Exception {
+        mvc.perform(post("/wallets/{id}/top-ups", ID).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType("application/problem+json"));
+    }
 }
