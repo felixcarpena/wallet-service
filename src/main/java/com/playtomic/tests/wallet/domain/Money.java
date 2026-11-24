@@ -1,5 +1,6 @@
 package com.playtomic.tests.wallet.domain;
 
+import com.playtomic.tests.wallet.domain.exceptions.CurrencyMismatchException;
 import jakarta.persistence.Embeddable;
 
 import java.math.BigDecimal;
@@ -16,5 +17,16 @@ public record Money(BigDecimal amount, Currency currency) {
         Objects.requireNonNull(amount, "amount");
         Objects.requireNonNull(currency, "currency");
         amount = amount.setScale(SCALE, RoundingMode.HALF_EVEN);
+    }
+
+    public Money add(Money other) {
+        if (!currency.equals(other.currency)) {
+            throw new CurrencyMismatchException(currency, other.currency);
+        }
+        return new Money(amount.add(other.amount), currency);
+    }
+
+    public boolean isPositive() {
+        return amount.signum() > 0;
     }
 }
