@@ -1,4 +1,5 @@
 spring.profiles.active: develop
+spring.jpa.open-in-view: false
 server:
   port: 8090
 ---
@@ -7,9 +8,10 @@ spring:
   jpa:
     show_sql: false
     database: H2
+    hibernate:
+      ddl-auto: create-drop
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_ON_EXIT=FALSE;IGNORECASE=TRUE
-    initialize: false
+    url: jdbc:h2:mem:wallet;DB_CLOSE_ON_EXIT=FALSE;IGNORECASE=TRUE
 stripe.simulator.charges-uri: https://sandbox.playtomic.io/v1/stripe-simulator/charges
 stripe.simulator.refunds-uri: https://sandbox.playtomic.io/v1/stripe-simulator/payments/{payment_id}/refunds
 ---
@@ -18,8 +20,9 @@ spring:
   jpa:
     show_sql: false
     database: H2
+    hibernate:
+      ddl-auto: create-drop
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_ON_EXIT=FALSE;IGNORECASE=TRUE
-    initialize: false
+    url: jdbc:h2:mem:wallet-test;DB_CLOSE_ON_EXIT=FALSE;IGNORECASE=TRUE
 stripe.simulator.charges-uri: http://localhost:9999
 stripe.simulator.refunds-uri: http://localhost:9999

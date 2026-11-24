@@ -1,16 +1,24 @@
 package com.playtomic.tests.wallet.infrastructure.http;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestMapping;
+import com.playtomic.tests.wallet.application.WalletReader;
+import com.playtomic.tests.wallet.domain.WalletId;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 public class WalletController {
-    private Logger log = LoggerFactory.getLogger(WalletController.class);
 
-    @RequestMapping("/")
-    void log() {
-        log.info("Logging from /");
+    private final WalletReader walletReader;
+
+    public WalletController(WalletReader walletReader) {
+        this.walletReader = walletReader;
+    }
+
+    @GetMapping("/wallets/{id}")
+    public WalletResponse findWallet(@PathVariable UUID id) {
+        return WalletResponse.from(walletReader.findOrFail(new WalletId(id)));
     }
 }
