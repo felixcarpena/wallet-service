@@ -1,8 +1,6 @@
-package com.playtomic.tests.wallet.service.impl;
+package com.playtomic.tests.wallet.infrastructure.payments;
 
-import com.playtomic.tests.wallet.service.Payment;
-import com.playtomic.tests.wallet.service.StripeAmountTooSmallException;
-import com.playtomic.tests.wallet.service.StripeService;
+import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeAmountTooSmallException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
 import org.springframework.boot.web.client.RestTemplateBuilder;
