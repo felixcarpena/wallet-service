@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.time.Duration;
 
 
 /**
@@ -33,11 +34,15 @@ public class StripeService {
 
     public StripeService(@Value("${stripe.simulator.charges-uri}") @NonNull URI chargesUri,
                          @Value("${stripe.simulator.refunds-uri}") @NonNull URI refundsUri,
+                         @Value("${stripe.simulator.connect-timeout}") @NonNull Duration connectTimeout,
+                         @Value("${stripe.simulator.read-timeout}") @NonNull Duration readTimeout,
                          @NonNull RestTemplateBuilder restTemplateBuilder) {
         this.chargesUri = chargesUri;
         this.refundsUri = refundsUri;
         this.restTemplate =
                 restTemplateBuilder
+                .setConnectTimeout(connectTimeout)
+                .setReadTimeout(readTimeout)
                 .errorHandler(new StripeRestTemplateResponseErrorHandler())
                 .build();
     }

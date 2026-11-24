@@ -3,10 +3,15 @@ package com.playtomic.tests.wallet.domain;
 import com.playtomic.tests.wallet.domain.exceptions.IllegalTopUpTransitionException;
 import com.playtomic.tests.wallet.domain.exceptions.TooManyDecimalsException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
 import java.util.Currency;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,11 +40,30 @@ class TopUpTest {
     void a_charged_card_moves_it_to_charged_and_asks_to_credit_the_wallet() {
         TopUp topUp = TopUp.start(TOP_UP, WALLET, AMOUNT, CARD);
 
-        CreditWallet creditWallet = topUp.on(CHARGED);
+        Optional<CreditWallet> creditWallet = topUp.on(CHARGED);
 
-        assertThat(creditWallet).isEqualTo(new CreditWallet(WALLET, AMOUNT, TOP_UP));
+        assertThat(creditWallet).contains(new CreditWallet(WALLET, AMOUNT, TOP_UP));
         assertThat(topUp.status()).isEqualTo(TopUpStatus.CHARGED);
         assertThat(topUp.paymentReference()).contains(new PaymentReference("payment-1"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("chargesThatDoNotCreditTheWallet")
+    void a_charge_that_did_not_succeed_ends_the_top_up_without_crediting_the_wallet(ChargeResult result, TopUpStatus expected) {
+        TopUp topUp = TopUp.start(TOP_UP, WALLET, AMOUNT, CARD);
+
+        Optional<CreditWallet> creditWallet = topUp.on(result);
+
+        assertThat(creditWallet).isEmpty();
+        assertThat(topUp.status()).isEqualTo(expected);
+        assertThat(topUp.paymentReference()).isEmpty();
+    }
+
+    static Stream<Arguments> chargesThatDoNotCreditTheWallet() {
+        return Stream.of(
+                Arguments.of(new ChargeResult.Declined(), TopUpStatus.DECLINED),
+                Arguments.of(new ChargeResult.Failed(), TopUpStatus.FAILED),
+                Arguments.of(new ChargeResult.Unconfirmed(), TopUpStatus.UNCONFIRMED));
     }
 
     @Test

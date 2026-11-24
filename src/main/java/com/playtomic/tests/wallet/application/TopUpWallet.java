@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Optional;
+
 @Component
 public class TopUpWallet {
 
@@ -34,20 +36,28 @@ public class TopUpWallet {
 
     @Transactional(propagation = Propagation.NEVER)
     public void topUp(TopUpId topUpId, WalletId walletId, Money amount, CardNumber card) {
+        start(topUpId, walletId, amount, card);
+        ChargeResult result = paymentProvider.charge(card, amount);
+        recordOutcome(topUpId, result).ifPresent(creditWallet -> credit(topUpId, creditWallet));
+    }
+
+    private void start(TopUpId topUpId, WalletId walletId, Money amount, CardNumber card) {
         transactions.executeWithoutResult(status -> {
             wallets.findOrFail(walletId).validateCredit(amount);
             topUps.save(TopUp.start(topUpId, walletId, amount, card));
         });
+    }
 
-        ChargeResult result = paymentProvider.charge(card, amount);
-
-        CreditWallet creditWallet = transactions.execute(status -> {
+    private Optional<CreditWallet> recordOutcome(TopUpId topUpId, ChargeResult result) {
+        return transactions.execute(status -> {
             TopUp topUp = topUps.findForUpdateOrFail(topUpId);
-            CreditWallet command = topUp.on(result);
+            Optional<CreditWallet> creditWallet = topUp.on(result);
             topUps.save(topUp);
-            return command;
+            return creditWallet;
         });
+    }
 
+    private void credit(TopUpId topUpId, CreditWallet creditWallet) {
         transactions.executeWithoutResult(status -> {
             TopUp topUp = topUps.findForUpdateOrFail(topUpId);
             Wallet wallet = wallets.findForUpdateOrFail(creditWallet.walletId());

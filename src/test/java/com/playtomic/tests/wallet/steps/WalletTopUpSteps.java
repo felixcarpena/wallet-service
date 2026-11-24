@@ -62,6 +62,26 @@ public class WalletTopUpSteps {
         assertThat(JsonText.read(response.last().getBody()).get("status").asText()).isEqualTo("COMPLETED");
     }
 
+    @Then("the top-up is reported as declined")
+    public void theTopUpIsReportedAsDeclined() throws Exception {
+        assertReported(HttpStatus.UNPROCESSABLE_ENTITY, "DECLINED");
+    }
+
+    @Then("the top-up is reported as failed")
+    public void theTopUpIsReportedAsFailed() throws Exception {
+        assertReported(HttpStatus.BAD_GATEWAY, "FAILED");
+    }
+
+    @Then("the top-up is reported as not confirmed")
+    public void theTopUpIsReportedAsNotConfirmed() throws Exception {
+        assertReported(HttpStatus.ACCEPTED, "UNCONFIRMED");
+    }
+
+    private void assertReported(HttpStatus status, String topUpStatus) throws Exception {
+        assertThat(response.last().getStatusCode()).isEqualTo(status);
+        assertThat(JsonText.read(response.last().getBody()).get("status").asText()).isEqualTo(topUpStatus);
+    }
+
     @Then("the top-up is reported as invalid")
     public void theTopUpIsReportedAsInvalid() {
         assertThat(response.last().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

@@ -11,10 +11,12 @@ import io.cucumber.java.en.Then;
 
 import java.math.RoundingMode;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
@@ -34,6 +36,9 @@ public class PaymentProviderSteps {
 
     @Before
     public void forgetPreviousScenario() {
+        if (!PROVIDER.isRunning()) {
+            PROVIDER.start();
+        }
         PROVIDER.resetAll();
     }
 
@@ -42,6 +47,33 @@ public class PaymentProviderSteps {
         PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(okJson("""
                 { "id": "payment-1" }
                 """)));
+    }
+
+    @Given("the payment provider accepts the charge without a payment reference")
+    public void thePaymentProviderAcceptsTheChargeWithoutAPaymentReference() {
+        PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(okJson("{}")));
+    }
+
+    @Given("the payment provider declines the charge")
+    public void thePaymentProviderDeclinesTheCharge() {
+        PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(422)));
+    }
+
+    @Given("the payment provider answers with a server error")
+    public void thePaymentProviderAnswersWithAServerError() {
+        PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(serverError()));
+    }
+
+    @Given("the payment provider does not answer in time")
+    public void thePaymentProviderDoesNotAnswerInTime() {
+        PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(okJson("""
+                { "id": "payment-1" }
+                """).withFixedDelay(2_000)));
+    }
+
+    @Given("the payment provider cannot be reached")
+    public void thePaymentProviderCannotBeReached() {
+        PROVIDER.stop();
     }
 
     @Then("the payment provider was not asked to charge anything")

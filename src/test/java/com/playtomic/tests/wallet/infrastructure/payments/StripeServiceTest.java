@@ -1,6 +1,7 @@
 package com.playtomic.tests.wallet.infrastructure.payments;
 
 import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeAmountTooSmallException;
+import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeServiceException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -11,12 +12,14 @@ import org.springframework.test.web.client.MockRestServiceServer;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -27,7 +30,8 @@ public class StripeServiceTest {
     private static final String CARD = "4242 4242 4242 4242";
 
     private final MockServerRestTemplateCustomizer customizer = new MockServerRestTemplateCustomizer();
-    private final StripeService stripeService = new StripeService(CHARGES_URI, REFUNDS_URI, new RestTemplateBuilder(customizer));
+    private final StripeService stripeService = new StripeService(CHARGES_URI, REFUNDS_URI,
+            Duration.ofSeconds(1), Duration.ofSeconds(1), new RestTemplateBuilder(customizer));
     private final MockRestServiceServer server = customizer.getServer();
 
     @Test
@@ -39,6 +43,15 @@ public class StripeServiceTest {
 
         assertThatThrownBy(() -> stripeService.charge(CARD, new BigDecimal(5)))
                 .isInstanceOf(StripeAmountTooSmallException.class);
+        server.verify();
+    }
+
+    @Test
+    public void charge_throws_a_service_error_when_provider_answers_with_a_server_error() {
+        server.expect(requestTo(CHARGES_URI)).andRespond(withServerError());
+
+        assertThatThrownBy(() -> stripeService.charge(CARD, new BigDecimal(15)))
+                .isExactlyInstanceOf(StripeServiceException.class);
         server.verify();
     }
 

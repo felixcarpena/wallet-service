@@ -14,6 +14,8 @@ spring:
     url: jdbc:h2:mem:wallet;DB_CLOSE_ON_EXIT=FALSE;IGNORECASE=TRUE
 stripe.simulator.charges-uri: https://sandbox.playtomic.io/v1/stripe-simulator/charges
 stripe.simulator.refunds-uri: https://sandbox.playtomic.io/v1/stripe-simulator/payments/{payment_id}/refunds
+stripe.simulator.connect-timeout: 2s
+stripe.simulator.read-timeout: 5s
 ---
 spring.config.activate.on-profile: test
 spring:
@@ -26,3 +28,5 @@ spring:
     url: jdbc:h2:mem:wallet-test;DB_CLOSE_ON_EXIT=FALSE;IGNORECASE=TRUE
 stripe.simulator.charges-uri: http://localhost:9999
 stripe.simulator.refunds-uri: http://localhost:9999
+stripe.simulator.connect-timeout: 1s
+stripe.simulator.read-timeout: 1s

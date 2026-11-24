@@ -57,14 +57,28 @@ public class TopUp {
         return new TopUp(id, walletId, amount, card.masked());
     }
 
-    public CreditWallet on(ChargeResult result) {
+    public Optional<CreditWallet> on(ChargeResult result) {
         requireStatus(TopUpStatus.PENDING);
-        if (!(result instanceof ChargeResult.Charged charged)) {
-            throw new IllegalStateException("Unhandled charge result " + result);
+        if (result instanceof ChargeResult.Charged charged) {
+            this.paymentReference = charged.reference().value();
+            this.status = TopUpStatus.CHARGED;
+            return Optional.of(new CreditWallet(walletId(), amount, id()));
         }
-        this.paymentReference = charged.reference().value();
-        this.status = TopUpStatus.CHARGED;
-        return new CreditWallet(walletId(), amount, id());
+        this.status = statusAfter(result);
+        return Optional.empty();
+    }
+
+    private static TopUpStatus statusAfter(ChargeResult result) {
+        if (result instanceof ChargeResult.Declined) {
+            return TopUpStatus.DECLINED;
+        }
+        if (result instanceof ChargeResult.Failed) {
+            return TopUpStatus.FAILED;
+        }
+        if (result instanceof ChargeResult.Unconfirmed) {
+            return TopUpStatus.UNCONFIRMED;
+        }
+        throw new IllegalStateException("Unhandled charge result " + result);
     }
 
     public void walletCredited() {

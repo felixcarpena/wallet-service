@@ -12,17 +12,19 @@ import com.playtomic.tests.wallet.domain.TopUpStatus;
 import com.playtomic.tests.wallet.domain.WalletId;
 import com.playtomic.tests.wallet.domain.exceptions.NonPositiveAmountException;
 import com.playtomic.tests.wallet.domain.exceptions.WalletNotFoundException;
-import java.math.BigDecimal;
-import java.util.Currency;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.util.Currency;
+import java.util.UUID;
 
 import static com.playtomic.tests.wallet.JsonText.compact;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -123,5 +125,20 @@ class WalletControllerTest {
                 .andExpect(content().json("""
                         { "title": "Invalid top-up", "status": 400 }
                         """));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"COMPLETED, 201", "DECLINED, 422", "FAILED, 502", "UNCONFIRMED, 202"})
+    void a_top_up_is_answered_with_the_http_status_of_its_outcome(TopUpStatus outcome, int httpStatus) throws Exception {
+        Money amount = new Money(new BigDecimal("15.00"), Currency.getInstance("EUR"));
+        when(topUpReader.findOrFail(any())).thenAnswer(invocation -> new TopUpView(invocation.getArgument(0), outcome, amount));
+
+        mvc.perform(post("/wallets/{id}/top-ups", ID).contentType(MediaType.APPLICATION_JSON).content("""
+                        { "amount": { "amount": 15.00, "currency": "EUR" }, "cardNumber": "4242 4242 4242 4242" }
+                        """))
+                .andExpect(status().is(httpStatus))
+                .andExpect(content().json("""
+                        { "status": "%s" }
+                        """.formatted(outcome)));
     }
 }
