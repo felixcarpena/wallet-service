@@ -6,6 +6,7 @@ import com.playtomic.tests.wallet.domain.Money;
 import com.playtomic.tests.wallet.domain.PaymentProvider;
 import com.playtomic.tests.wallet.domain.PaymentReference;
 import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeAmountTooSmallException;
+import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeRequestRejectedException;
 import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeServiceException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -34,6 +35,8 @@ public class StripePaymentProvider implements PaymentProvider {
             return new ChargeResult.Charged(new PaymentReference(payment.getId()));
         } catch (StripeAmountTooSmallException declined) {
             return new ChargeResult.Declined();
+        } catch (StripeRequestRejectedException rejected) {
+            return new ChargeResult.Failed();
         } catch (ResourceAccessException noAnswer) {
             return noAnswer.getCause() instanceof ConnectException ? new ChargeResult.Failed() : new ChargeResult.Unconfirmed();
         } catch (StripeServiceException | RestClientException unexpectedAnswer) {

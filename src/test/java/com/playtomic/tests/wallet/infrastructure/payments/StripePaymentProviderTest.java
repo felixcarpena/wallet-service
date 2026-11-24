@@ -73,6 +73,11 @@ class StripePaymentProviderTest {
     }
 
     @Test
+    void a_charge_request_the_provider_rejects_fails_the_charge() {
+        assertThat(chargeAnswered(withStatus(HttpStatus.BAD_REQUEST))).isEqualTo(new ChargeResult.Failed());
+    }
+
+    @Test
     void a_server_error_leaves_the_charge_unconfirmed() {
         assertThat(chargeAnswered(withServerError())).isEqualTo(new ChargeResult.Unconfirmed());
     }

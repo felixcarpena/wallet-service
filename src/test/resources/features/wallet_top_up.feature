@@ -32,6 +32,14 @@ Feature: Wallet top-up
       Then the top-up is reported as failed
       And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
 
+    Scenario: A charge request the payment provider rejects leaves the balance unchanged
+      Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
+      And the payment provider rejects the charge request
+      When the player tops up 15.00 EUR on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
+      Then the top-up is reported as failed
+      And the payment provider was asked to charge 15.00 EUR on card 4242 4242 4242 4242
+      And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
+
   Rule: A top-up the payment provider may have charged is reported as not confirmed and not credited
 
     Scenario: A server error from the payment provider is reported as not confirmed

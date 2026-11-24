@@ -59,6 +59,11 @@ public class PaymentProviderSteps {
         PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(422)));
     }
 
+    @Given("the payment provider rejects the charge request")
+    public void thePaymentProviderRejectsTheChargeRequest() {
+        PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(aResponse().withStatus(400)));
+    }
+
     @Given("the payment provider answers with a server error")
     public void thePaymentProviderAnswersWithAServerError() {
         PROVIDER.stubFor(post(urlEqualTo("/")).willReturn(serverError()));

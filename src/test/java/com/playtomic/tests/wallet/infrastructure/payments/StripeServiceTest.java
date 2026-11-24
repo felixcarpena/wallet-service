@@ -1,6 +1,7 @@
 package com.playtomic.tests.wallet.infrastructure.payments;
 
 import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeAmountTooSmallException;
+import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeRequestRejectedException;
 import com.playtomic.tests.wallet.infrastructure.payments.exceptions.StripeServiceException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.web.client.MockServerRestTemplateCustomizer;
@@ -43,6 +44,15 @@ public class StripeServiceTest {
 
         assertThatThrownBy(() -> stripeService.charge(CARD, new BigDecimal(5)))
                 .isInstanceOf(StripeAmountTooSmallException.class);
+        server.verify();
+    }
+
+    @Test
+    public void charge_throws_request_rejected_when_provider_answers_another_client_error() {
+        server.expect(requestTo(CHARGES_URI)).andRespond(withStatus(HttpStatus.BAD_REQUEST));
+
+        assertThatThrownBy(() -> stripeService.charge(CARD, new BigDecimal(15)))
+                .isInstanceOf(StripeRequestRejectedException.class);
         server.verify();
     }
 
