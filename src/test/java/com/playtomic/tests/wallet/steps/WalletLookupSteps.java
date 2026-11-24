@@ -7,6 +7,7 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
@@ -38,5 +39,11 @@ public class WalletLookupSteps {
         assertThat(body.get("id").asText()).isEqualTo(row.get("id"));
         assertThat(body.get("balance").get("amount").decimalValue()).isEqualTo(new BigDecimal(expectedBalance[0]));
         assertThat(body.get("balance").get("currency").asText()).isEqualTo(expectedBalance[1]);
+    }
+
+    @Then("the wallet is reported as not found")
+    public void theWalletIsReportedAsNotFound() {
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON);
     }
 }

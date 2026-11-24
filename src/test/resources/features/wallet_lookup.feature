@@ -8,7 +8,6 @@ Feature: Wallet lookup
       | id                                   | balance   |
       | 00000000-0000-7000-8000-000000000001 | 25.00 EUR |
 
-  @pending
   Scenario: An unknown wallet is reported as not found
     Given no wallet 00000000-0000-7000-8000-000000000002 exists
     When the player requests the wallet 00000000-0000-7000-8000-000000000002

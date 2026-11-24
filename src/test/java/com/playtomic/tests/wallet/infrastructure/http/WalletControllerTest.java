@@ -4,6 +4,7 @@ import com.playtomic.tests.wallet.application.WalletReader;
 import com.playtomic.tests.wallet.application.WalletView;
 import com.playtomic.tests.wallet.domain.Money;
 import com.playtomic.tests.wallet.domain.WalletId;
+import com.playtomic.tests.wallet.domain.exceptions.WalletNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -47,5 +48,21 @@ class WalletControllerTest {
                           }
                         }
                         """)));
+    }
+
+    @Test
+    void reports_an_unknown_wallet_as_not_found() throws Exception {
+        when(walletReader.findOrFail(new WalletId(ID))).thenThrow(new WalletNotFoundException(new WalletId(ID)));
+
+        mvc.perform(get("/wallets/{id}", ID))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType("application/problem+json"))
+                .andExpect(content().json("""
+                        {
+                          "title": "Wallet not found",
+                          "status": 404,
+                          "detail": "Wallet 00000000-0000-7000-8000-000000000001 does not exist"
+                        }
+                        """));
     }
 }
