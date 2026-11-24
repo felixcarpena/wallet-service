@@ -66,7 +66,6 @@ Feature: Wallet top-up
 
   Rule: An invalid top-up never reaches the payment provider
 
-    @pending
     Scenario Outline: A top-up with a non-positive amount is rejected
       Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
       When the player tops up <amount> on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
@@ -79,15 +78,39 @@ Feature: Wallet top-up
         | 0.00 EUR   |
         | -10.00 EUR |
 
-    @pending
-    Scenario: A top-up with more decimals than its currency allows is rejected
+    Scenario Outline: A top-up with more decimals than allowed is rejected
       Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
-      When the player tops up 15.001 EUR on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
+      When the player tops up <amount> on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
       Then the top-up is reported as invalid
       And the payment provider was not asked to charge anything
       And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
 
-    @pending
+      Examples:
+        | amount       |
+        | 15.001 EUR   |
+        | 15.00005 EUR |
+
+    Scenario: A top-up in an unknown currency is rejected
+      Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
+      When the player tops up 15.00 XYZ on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
+      Then the top-up is reported as invalid
+      And the payment provider was not asked to charge anything
+      And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
+
+    Scenario: A top-up without an amount is rejected
+      Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
+      When the player tops up wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242 without an amount
+      Then the top-up is reported as invalid
+      And the payment provider was not asked to charge anything
+      And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
+
+    Scenario: A top-up without a currency is rejected
+      Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
+      When the player tops up 15.00 without a currency on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
+      Then the top-up is reported as invalid
+      And the payment provider was not asked to charge anything
+      And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
+
     Scenario: A top-up in a different currency from the wallet is rejected
       Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
       When the player tops up 15.00 USD on wallet 00000000-0000-7000-8000-000000000001 with card 4242 4242 4242 4242
@@ -95,7 +118,6 @@ Feature: Wallet top-up
       And the payment provider was not asked to charge anything
       And the balance of wallet 00000000-0000-7000-8000-000000000001 is 10.00 EUR
 
-    @pending
     Scenario: A top-up without a card number is rejected
       Given a wallet 00000000-0000-7000-8000-000000000001 with a balance of 10.00 EUR
       When the player tops up 15.00 EUR on wallet 00000000-0000-7000-8000-000000000001 without a card number
@@ -105,7 +127,6 @@ Feature: Wallet top-up
 
   Rule: A top-up needs an existing wallet
 
-    @pending
     Scenario: A top-up to an unknown wallet is reported as not found
       Given no wallet 00000000-0000-7000-8000-000000000002 exists
       When the player tops up 15.00 EUR on wallet 00000000-0000-7000-8000-000000000002 with card 4242 4242 4242 4242

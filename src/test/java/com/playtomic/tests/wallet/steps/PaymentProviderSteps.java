@@ -44,6 +44,11 @@ public class PaymentProviderSteps {
                 """)));
     }
 
+    @Then("the payment provider was not asked to charge anything")
+    public void thePaymentProviderWasNotAskedToChargeAnything() {
+        PROVIDER.verify(0, postRequestedFor(urlEqualTo("/")));
+    }
+
     @Then("the payment provider was asked to charge {money} on card {card}")
     public void thePaymentProviderWasAskedToCharge(Money amount, CardNumber card) {
         String charged = amount.amount().setScale(amount.currency().getDefaultFractionDigits(), RoundingMode.UNNECESSARY).toPlainString();

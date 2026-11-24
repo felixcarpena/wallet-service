@@ -38,7 +38,7 @@ public class WalletController {
     @ResponseStatus(HttpStatus.CREATED)
     public TopUpResponse topUp(@PathVariable UUID id, @RequestBody TopUpRequest request) {
         TopUpId topUpId = TopUpId.generate();
-        topUpWallet.topUp(topUpId, new WalletId(id), request.amount().toMoney(), new CardNumber(request.cardNumber()));
+        topUpWallet.topUp(topUpId, new WalletId(id), request.money(), new CardNumber(request.cardNumber()));
         return TopUpResponse.from(topUpReader.findOrFail(topUpId));
     }
 }

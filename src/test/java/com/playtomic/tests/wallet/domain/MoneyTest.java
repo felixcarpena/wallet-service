@@ -1,6 +1,7 @@
 package com.playtomic.tests.wallet.domain;
 
 import com.playtomic.tests.wallet.domain.exceptions.CurrencyMismatchException;
+import com.playtomic.tests.wallet.domain.exceptions.TooManyDecimalsException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -22,6 +23,11 @@ class MoneyTest {
     @Test
     void keeps_four_decimals_internally() {
         assertThat(new Money(new BigDecimal("25.5"), EUR).amount()).isEqualTo(new BigDecimal("25.5000"));
+    }
+
+    @Test
+    void rejects_more_than_four_decimals_instead_of_rounding_them() {
+        assertThatThrownBy(() -> eur("15.00005")).isInstanceOf(TooManyDecimalsException.class);
     }
 
     @Test

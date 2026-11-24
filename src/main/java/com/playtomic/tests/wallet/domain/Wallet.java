@@ -1,5 +1,6 @@
 package com.playtomic.tests.wallet.domain;
 
+import com.playtomic.tests.wallet.domain.exceptions.CurrencyMismatchException;
 import com.playtomic.tests.wallet.domain.exceptions.NonPositiveAmountException;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
@@ -47,10 +48,17 @@ public class Wallet {
         return Collections.unmodifiableList(movements);
     }
 
-    public WalletMovement credit(Money amount, TopUpId topUpId) {
+    public void validateCredit(Money amount) {
         if (!amount.isPositive()) {
             throw new NonPositiveAmountException(amount);
         }
+        if (!amount.currency().equals(balance.currency())) {
+            throw new CurrencyMismatchException(balance.currency(), amount.currency());
+        }
+    }
+
+    public WalletMovement credit(Money amount, TopUpId topUpId) {
+        validateCredit(amount);
         Money newBalance = balance.add(amount);
         WalletMovement movement = new WalletMovement(this, WalletMovementType.TOP_UP, amount, topUpId.value());
         movements.add(movement);

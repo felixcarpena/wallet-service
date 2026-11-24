@@ -44,7 +44,18 @@ class JpaWalletRepositoryTest {
     }
 
     @Test
+    void finds_a_saved_wallet_without_locking_it() {
+        saved(new Wallet(WALLET, eur("10.00")));
+
+        Wallet found = repository.findOrFail(WALLET);
+
+        assertThat(found.balance()).isEqualTo(eur("10.00"));
+        assertThat(entityManager.getLockMode(found)).isNotEqualTo(LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    @Test
     void rejects_an_unknown_wallet() {
+        assertThatThrownBy(() -> repository.findOrFail(WALLET)).isInstanceOf(WalletNotFoundException.class);
         assertThatThrownBy(() -> repository.findForUpdateOrFail(WALLET)).isInstanceOf(WalletNotFoundException.class);
     }
 

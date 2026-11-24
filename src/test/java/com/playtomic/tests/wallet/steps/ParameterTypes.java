@@ -10,9 +10,14 @@ import java.util.UUID;
 
 public class ParameterTypes {
 
-    @ParameterType("(\\d+(?:\\.\\d+)?) ([A-Z]{3})")
+    @ParameterType("(-?\\d+(?:\\.\\d+)?) ([A-Z]{3})")
     public Money money(String amount, String currency) {
         return new Money(new BigDecimal(amount), Currency.getInstance(currency));
+    }
+
+    @ParameterType("(-?\\d+(?:\\.\\d+)?) ([A-Z]{3})")
+    public RequestedAmount amount(String value, String currency) {
+        return new RequestedAmount(value, currency);
     }
 
     @ParameterType("\\d{4}(?: \\d{4}){3}")

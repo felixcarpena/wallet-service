@@ -27,7 +27,7 @@ class JpaTopUpReaderTest {
 
     private static final TopUpId TOP_UP = new TopUpId(UUID.fromString("00000000-0000-7000-8000-0000000000a1"));
     private static final WalletId WALLET = new WalletId(UUID.fromString("00000000-0000-7000-8000-000000000001"));
-    private static final Money AMOUNT = new Money(new BigDecimal("15.1234"), Currency.getInstance("EUR"));
+    private static final Money AMOUNT = new Money(new BigDecimal("15.12"), Currency.getInstance("EUR"));
 
     @Autowired
     private JpaTopUpRepository repository;

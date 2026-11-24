@@ -34,7 +34,10 @@ public class TopUpWallet {
 
     @Transactional(propagation = Propagation.NEVER)
     public void topUp(TopUpId topUpId, WalletId walletId, Money amount, CardNumber card) {
-        transactions.executeWithoutResult(status -> topUps.save(TopUp.start(topUpId, walletId, amount, card)));
+        transactions.executeWithoutResult(status -> {
+            wallets.findOrFail(walletId).validateCredit(amount);
+            topUps.save(TopUp.start(topUpId, walletId, amount, card));
+        });
 
         ChargeResult result = paymentProvider.charge(card, amount);
 

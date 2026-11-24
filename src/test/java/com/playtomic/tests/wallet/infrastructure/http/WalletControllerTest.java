@@ -10,6 +10,7 @@ import com.playtomic.tests.wallet.domain.Money;
 import com.playtomic.tests.wallet.domain.TopUpId;
 import com.playtomic.tests.wallet.domain.TopUpStatus;
 import com.playtomic.tests.wallet.domain.WalletId;
+import com.playtomic.tests.wallet.domain.exceptions.NonPositiveAmountException;
 import com.playtomic.tests.wallet.domain.exceptions.WalletNotFoundException;
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -27,6 +28,7 @@ import static com.playtomic.tests.wallet.JsonText.compact;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -106,5 +108,20 @@ class WalletControllerTest {
                   "amount": { "amount": 15.00, "currency": "EUR" }
                 }
                 """.formatted(topUpId.getValue().value())));
+    }
+
+    @Test
+    void an_invalid_top_up_is_reported_as_a_bad_request() throws Exception {
+        doThrow(new NonPositiveAmountException(new Money(BigDecimal.ZERO, Currency.getInstance("EUR"))))
+                .when(topUpWallet).topUp(any(), any(), any(), any());
+
+        mvc.perform(post("/wallets/{id}/top-ups", ID).contentType(MediaType.APPLICATION_JSON).content("""
+                        { "amount": { "amount": 0.00, "currency": "EUR" }, "cardNumber": "4242 4242 4242 4242" }
+                        """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType("application/problem+json"))
+                .andExpect(content().json("""
+                        { "title": "Invalid top-up", "status": 400 }
+                        """));
     }
 }

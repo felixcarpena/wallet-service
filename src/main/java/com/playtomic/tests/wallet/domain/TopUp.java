@@ -1,6 +1,7 @@
 package com.playtomic.tests.wallet.domain;
 
 import com.playtomic.tests.wallet.domain.exceptions.IllegalTopUpTransitionException;
+import com.playtomic.tests.wallet.domain.exceptions.TooManyDecimalsException;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -50,6 +51,9 @@ public class TopUp {
     }
 
     public static TopUp start(TopUpId id, WalletId walletId, Money amount, CardNumber card) {
+        if (amount.amount().stripTrailingZeros().scale() > amount.currency().getDefaultFractionDigits()) {
+            throw new TooManyDecimalsException(amount.amount(), amount.currency().getDefaultFractionDigits());
+        }
         return new TopUp(id, walletId, amount, card.masked());
     }
 

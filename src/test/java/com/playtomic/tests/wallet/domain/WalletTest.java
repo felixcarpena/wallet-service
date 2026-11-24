@@ -56,6 +56,18 @@ class WalletTest {
         assertThat(wallet.balance()).isEqualTo(eur("10.00"));
     }
 
+    @Test
+    void a_credit_can_be_validated_before_it_happens_without_changing_the_wallet() {
+        Wallet wallet = new Wallet(WALLET, eur("10.00"));
+
+        assertThatThrownBy(() -> wallet.validateCredit(eur("0.00"))).isInstanceOf(NonPositiveAmountException.class);
+        assertThatThrownBy(() -> wallet.validateCredit(new Money(BigDecimal.TEN, Currency.getInstance("USD"))))
+                .isInstanceOf(CurrencyMismatchException.class);
+        wallet.validateCredit(eur("15.00"));
+        assertThat(wallet.balance()).isEqualTo(eur("10.00"));
+        assertThat(wallet.movements()).isEmpty();
+    }
+
     private static Money eur(String amount) {
         return new Money(new BigDecimal(amount), EUR);
     }

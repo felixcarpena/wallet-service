@@ -11,7 +11,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -22,26 +21,57 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WalletTopUpSteps {
 
     private final TestRestTemplate http;
-    private ResponseEntity<String> response;
+    private final ScenarioResponse response;
 
-    public WalletTopUpSteps(TestRestTemplate http) {
+    public WalletTopUpSteps(TestRestTemplate http, ScenarioResponse response) {
         this.http = http;
+        this.response = response;
     }
 
-    @When("the player tops up {money} on wallet {uuid} with card {card}")
-    public void thePlayerTopsUp(Money amount, UUID wallet, CardNumber card) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        String body = """
+    @When("the player tops up {amount} on wallet {uuid} with card {card}")
+    public void thePlayerTopsUp(RequestedAmount amount, UUID wallet, CardNumber card) {
+        topUp(wallet, """
                 { "amount": { "amount": %s, "currency": "%s" }, "cardNumber": "%s" }
-                """.formatted(amount.amount().toPlainString(), amount.currency().getCurrencyCode(), card.value());
-        response = http.postForEntity("/wallets/{id}/top-ups", new HttpEntity<>(body, headers), String.class, wallet);
+                """.formatted(amount.value(), amount.currency(), card.value()));
+    }
+
+    @When("the player tops up {amount} on wallet {uuid} without a card number")
+    public void thePlayerTopsUpWithoutACardNumber(RequestedAmount amount, UUID wallet) {
+        topUp(wallet, """
+                { "amount": { "amount": %s, "currency": "%s" } }
+                """.formatted(amount.value(), amount.currency()));
+    }
+
+    @When("the player tops up wallet {uuid} with card {card} without an amount")
+    public void thePlayerTopsUpWithoutAnAmount(UUID wallet, CardNumber card) {
+        topUp(wallet, """
+                { "cardNumber": "%s" }
+                """.formatted(card.value()));
+    }
+
+    @When("the player tops up {bigdecimal} without a currency on wallet {uuid} with card {card}")
+    public void thePlayerTopsUpWithoutACurrency(BigDecimal value, UUID wallet, CardNumber card) {
+        topUp(wallet, """
+                { "amount": { "amount": %s }, "cardNumber": "%s" }
+                """.formatted(value.toPlainString(), card.value()));
     }
 
     @Then("the top-up is reported as completed")
     public void theTopUpIsReportedAsCompleted() throws Exception {
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(JsonText.read(response.getBody()).get("status").asText()).isEqualTo("COMPLETED");
+        assertThat(response.last().getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(JsonText.read(response.last().getBody()).get("status").asText()).isEqualTo("COMPLETED");
+    }
+
+    @Then("the top-up is reported as invalid")
+    public void theTopUpIsReportedAsInvalid() {
+        assertThat(response.last().getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.last().getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON);
+    }
+
+    private void topUp(UUID wallet, String body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        response.remember(http.postForEntity("/wallets/{id}/top-ups", new HttpEntity<>(body, headers), String.class, wallet));
     }
 
     @Then("the balance of wallet {uuid} is {money}")

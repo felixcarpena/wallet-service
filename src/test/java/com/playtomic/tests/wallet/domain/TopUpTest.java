@@ -1,6 +1,7 @@
 package com.playtomic.tests.wallet.domain;
 
 import com.playtomic.tests.wallet.domain.exceptions.IllegalTopUpTransitionException;
+import com.playtomic.tests.wallet.domain.exceptions.TooManyDecimalsException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -21,6 +22,13 @@ class TopUpTest {
     @Test
     void a_started_top_up_is_pending() {
         assertThat(TopUp.start(TOP_UP, WALLET, AMOUNT, CARD).status()).isEqualTo(TopUpStatus.PENDING);
+    }
+
+    @Test
+    void a_top_up_cannot_have_more_decimals_than_its_currency() {
+        Money tooPrecise = new Money(new BigDecimal("15.001"), Currency.getInstance("EUR"));
+
+        assertThatThrownBy(() -> TopUp.start(TOP_UP, WALLET, tooPrecise, CARD)).isInstanceOf(TooManyDecimalsException.class);
     }
 
     @Test

@@ -6,5 +6,7 @@ public interface WalletRepository {
 
     void save(Wallet wallet);
 
+    Wallet findOrFail(WalletId id) throws WalletNotFoundException;
+
     Wallet findForUpdateOrFail(WalletId id) throws WalletNotFoundException;
 }

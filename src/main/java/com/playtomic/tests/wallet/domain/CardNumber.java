@@ -1,11 +1,13 @@
 package com.playtomic.tests.wallet.domain;
 
-import java.util.Objects;
+import com.playtomic.tests.wallet.domain.exceptions.InvalidCardNumberException;
 
 public record CardNumber(String value) {
 
     public CardNumber {
-        Objects.requireNonNull(value, "value");
+        if (value == null || value.isBlank()) {
+            throw new InvalidCardNumberException();
+        }
     }
 
     public String masked() {

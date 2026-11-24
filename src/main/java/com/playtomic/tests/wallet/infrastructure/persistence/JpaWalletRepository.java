@@ -25,8 +25,17 @@ public class JpaWalletRepository implements WalletRepository {
     }
 
     @Override
+    public Wallet findOrFail(WalletId id) throws WalletNotFoundException {
+        return find(id, LockModeType.NONE);
+    }
+
+    @Override
     public Wallet findForUpdateOrFail(WalletId id) throws WalletNotFoundException {
-        return Optional.ofNullable(entityManager.find(Wallet.class, id.value(), LockModeType.PESSIMISTIC_WRITE))
+        return find(id, LockModeType.PESSIMISTIC_WRITE);
+    }
+
+    private Wallet find(WalletId id, LockModeType lock) {
+        return Optional.ofNullable(entityManager.find(Wallet.class, id.value(), lock))
                 .orElseThrow(() -> new WalletNotFoundException(id));
     }
 }
