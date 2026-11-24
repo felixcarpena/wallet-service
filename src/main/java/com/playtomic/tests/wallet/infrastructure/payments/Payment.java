@@ -13,4 +13,8 @@ public class Payment {
     public Payment(@JsonProperty(value = "id", required = true) String id) {
         this.id = id;
     }
+
+    public String getId() {
+        return id;
+    }
 }
