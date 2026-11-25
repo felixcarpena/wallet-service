@@ -1,4 +1,6 @@
 # Wallets Service
+> Solution notes and how to run it: [NOTES.md](NOTES.md)
+
 In Playtomic, we have a service to manage our wallets. Our players can top-up their wallets using a credit card and spend that money on our platform (bookings, racket rentals, ...)
 
 That service has the following operations:
